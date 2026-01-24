@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Lyd Upload</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background-color:#f4f4f4; color:#333; }
+    h1 { font-size:28px; margin-bottom:15px; }
+    #audio-upload { margin-bottom: 20px; }
+    .audio-item { margin-bottom:15px; padding: 10px; background-color: #fff; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .audio-item p { margin: 0 0 5px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Upload dine egne lyde</h1>
+  <p>Vælg en eller flere lydfiler, og se dem med det samme. Hvem har brug for et orkester, når du kan dirigere dine egne lydeffekter?</p>
+  <input type="file" id="audio-upload" accept="audio/*" multiple>
+  <div id="audio-list"></div>
+  
+  <script>
+    const audioUpload = document.getElementById('audio-upload');
+    const audioList = document.getElementById('audio-list');
+
+    audioUpload.addEventListener('change', function(event) {
+      audioList.innerHTML = '';
+      const files = event.target.files;
+      if (!files.length) {
+        return;
+      }
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const audioURL = URL.createObjectURL(file);
+        const audioElem = document.createElement('audio');
+        audioElem.controls = true;
+        audioElem.src = audioURL;
+        const div = document.createElement('div');
+        div.className = 'audio-item';
+        const label = document.createElement('p');
+        label.textContent = file.name;
+        div.appendChild(label);
+        div.appendChild(audioElem);
+        audioList.appendChild(div);
+      }
+    });
+  </script>
+</body>
+</html>
