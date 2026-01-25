@@ -2,46 +2,110 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Lyd Upload</title>
+  <title>Lyd Upload og Gem</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; background-color:#f4f4f4; color:#333; }
     h1 { font-size:28px; margin-bottom:15px; }
+    h2 { font-size:22px; margin-top:30px; margin-bottom:10px; }
     #audio-upload { margin-bottom: 20px; }
     .audio-item { margin-bottom:15px; padding: 10px; background-color: #fff; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
     .audio-item p { margin: 0 0 5px; font-weight: bold; }
+    .audio-actions { margin-top: 5px; }
+    .audio-actions button { margin-right: 5px; padding: 4px 8px; border: none; border-radius:4px; cursor: pointer; }
+    .save-btn { background-color: #007bff; color: white; }
+    .remove-btn { background-color: #dc3545; color: white; }
   </style>
 </head>
 <body>
-  <h1>Upload dine egne lyde</h1>
-  <p>Vælg en eller flere lydfiler, og se dem med det samme. Hvem har brug for et orkester, når du kan dirigere dine egne lydeffekter?</p>
+  <h1>Upload og gem dine egne lyde</h1>
+  <p>Vælg en eller flere lydfiler, gem dem til senere brug og afspil dem direkte i browseren.</p>
   <input type="file" id="audio-upload" accept="audio/*" multiple>
+
+  <h2>Nyeste upload</h2>
   <div id="audio-list"></div>
-  
+
+  <h2>Gemte lyde</h2>
+  <div id="saved-audio-list"></div>
+
   <script>
     const audioUpload = document.getElementById('audio-upload');
     const audioList = document.getElementById('audio-list');
+    const savedAudioList = document.getElementById('saved-audio-list');
 
+    // Load saved audios from localStorage on page load
+    document.addEventListener('DOMContentLoaded', loadSavedAudios);
+
+    // Handle new file uploads
     audioUpload.addEventListener('change', function(event) {
       audioList.innerHTML = '';
       const files = event.target.files;
       if (!files.length) {
         return;
       }
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+      Array.from(files).forEach(file => {
         const audioURL = URL.createObjectURL(file);
-        const audioElem = document.createElement('audio');
-        audioElem.controls = true;
-        audioElem.src = audioURL;
-        const div = document.createElement('div');
-        div.className = 'audio-item';
-        const label = document.createElement('p');
-        label.textContent = file.name;
-        div.appendChild(label);
-        div.appendChild(audioElem);
-        audioList.appendChild(div);
-      }
+        createAudioItem(audioList, file.name, audioURL, false, null, file);
+      });
     });
+
+    // Load saved audios and render them
+    function loadSavedAudios() {
+      const saved = JSON.parse(localStorage.getItem('savedAudios')) || [];
+      savedAudioList.innerHTML = '';
+      saved.forEach((audio, index) => {
+        createAudioItem(savedAudioList, audio.name, audio.data, true, index, null);
+      });
+    }
+
+    // Create an audio item UI block
+    function createAudioItem(container, name, src, isSaved, index, file) {
+      const div = document.createElement('div');
+      div.className = 'audio-item';
+      const label = document.createElement('p');
+      label.textContent = name;
+      const audioElem = document.createElement('audio');
+      audioElem.controls = true;
+      audioElem.src = src;
+      div.appendChild(label);
+      div.appendChild(audioElem);
+      const actions = document.createElement('div');
+      actions.className = 'audio-actions';
+      if (isSaved) {
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = 'Slet';
+        removeBtn.className = 'remove-btn';
+        removeBtn.addEventListener('click', () => removeSaved(index));
+        actions.appendChild(removeBtn);
+      } else {
+        const saveBtn = document.createElement('button');
+        saveBtn.textContent = 'Gem';
+        saveBtn.className = 'save-btn';
+        saveBtn.addEventListener('click', () => saveAudio(file));
+        actions.appendChild(saveBtn);
+      }
+      div.appendChild(actions);
+      container.appendChild(div);
+    }
+
+    // Save audio file to localStorage
+    function saveAudio(file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const saved = JSON.parse(localStorage.getItem('savedAudios')) || [];
+        saved.push({ name: file.name, data: e.target.result });
+        localStorage.setItem('savedAudios', JSON.stringify(saved));
+        loadSavedAudios();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Remove saved audio from localStorage
+    function removeSaved(index) {
+      const saved = JSON.parse(localStorage.getItem('savedAudios')) || [];
+      saved.splice(index, 1);
+      localStorage.setItem('savedAudios', JSON.stringify(saved));
+      loadSavedAudios();
+    }
   </script>
 </body>
 </html>
